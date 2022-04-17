@@ -4,4 +4,6 @@ import java.rmi.RemoteException;
 public interface CallbackClientInterface extends Remote {
 
     public String notifyMe(String message) throws RemoteException;
+
+    public String searchFile(String fileName) throws RemoteException;
 }

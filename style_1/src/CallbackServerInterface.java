@@ -8,4 +8,7 @@ public interface CallbackServerInterface extends Remote {
     public void registerForCallback(CallbackClientInterface callbackClientObj) throws RemoteException;
 
     public void unregisterForCallback(CallbackClientInterface callbackClientObj) throws RemoteException;
+
+    public String searchFile(String fileName) throws RemoteException;
+
 }
