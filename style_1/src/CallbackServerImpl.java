@@ -40,21 +40,24 @@ public class CallbackServerImpl extends UnicastRemoteObject implements CallbackS
     }
 
     @Override
-    public synchronized String searchFile(String fileName) throws RemoteException {
+    public synchronized CallbackClientInterface searchFile(String fileName) throws RemoteException {
         System.out.println("**********************************\n"
                 + "Searching For File ----");
 
 
-        String result = "";
+        CallbackClientInterface result;
         for (int i = 0; i < clientList.size(); i++) {
 
             CallbackClientInterface nextClient = (CallbackClientInterface) clientList.elementAt(i);
 
-            result = nextClient.searchFile(fileName);
+            if (nextClient.searchFile(fileName)){
+                return nextClient;
+            }
+
         }
         System.out.println("number of registered clients: " + clientList.size());
 
-        return result;
+        return null;
     }
 
     private synchronized void doCallbacks() throws RemoteException {

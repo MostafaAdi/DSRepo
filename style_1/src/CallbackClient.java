@@ -5,6 +5,8 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 public class CallbackClient {
@@ -42,15 +44,10 @@ public class CallbackClient {
             CallbackClientInterface callbackObj = new CallbackClientImpl(path);
             h.registerForCallback(callbackObj);
             System.out.println("Registered for callback.");
-//            System.out.println("enter file name you want to search for");
-//            String fileToSearch = br.readLine();
-//            String downloadLink = h.searchFile(fileToSearch);
-//
-//            System.out.println(downloadLink);
 
             boolean findMore;
             do {
-                String[] options = {"Find File", "Exit"};
+                String[] options = {"Find File", "Download File", "Exit"};
                 int choice = JOptionPane.showOptionDialog(null, "Choose an action", "Option dialog", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
 
                 switch(choice){
@@ -58,11 +55,25 @@ public class CallbackClient {
                     case 0:
                         String fileName = JOptionPane.showInputDialog("Type the name of the file you want to find.");
                         try{
-                            String response = h.searchFile(fileName);
-                            JOptionPane.showMessageDialog(null,  response + "\n", "Found", JOptionPane.INFORMATION_MESSAGE);
+                            CallbackClientInterface response = h.searchFile(fileName);
+                            if (response == null) {
+                                JOptionPane.showMessageDialog(null,  "No Such File" + "\n");
+                                break;
+                            }
+
+                            callbackObj.saveLink(fileName, response);
+                            JOptionPane.showMessageDialog(null, "Found file, saving download link---" + "\n");
+
                         }catch(NoSuchElementException ex){
                             JOptionPane.showMessageDialog(null, "Not found");
                         }
+                        break;
+                    case 1:
+                        //TODO implement download logic
+                        String[] availableFiles = callbackObj.showAvailableFiles().toArray(new String[0]) ;
+                        int choose = JOptionPane.showOptionDialog(null, "Choose a file", "Option dialog", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, availableFiles, availableFiles[0]);
+                        callbackObj.downloadFile(availableFiles[choose], callbackObj.getDownloadLink(availableFiles[choose]));
+
                         break;
 
                     default:
@@ -77,7 +88,7 @@ public class CallbackClient {
                     System.out.println("Unregistered for callback.");
                     System.exit(0);
                 }
-            } while (findMore);
+            } while (true);
 
         } catch (Exception e) {
 

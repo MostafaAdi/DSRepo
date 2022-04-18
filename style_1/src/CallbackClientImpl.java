@@ -1,13 +1,14 @@
+import javax.swing.*;
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Arrays;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.function.Predicate;
 
 public class CallbackClientImpl extends UnicastRemoteObject implements CallbackClientInterface {
 
     private String[] pathNames;
+    private Map<String, CallbackClientInterface> downloadLinks;
 
     public void setPathNames(String[] pathNames) {
         this.pathNames = pathNames;
@@ -21,7 +22,19 @@ public class CallbackClientImpl extends UnicastRemoteObject implements CallbackC
         super();
         File file = new File("E:/" + filePath);
         this.pathNames = file.list();
+        downloadLinks = new HashMap<>();
 
+
+    }
+
+    @Override
+    public Set<String> showAvailableFiles(){
+        return downloadLinks.keySet();
+    }
+
+    @Override
+    public CallbackClientInterface getDownloadLink(String fileName) throws RemoteException {
+        return downloadLinks.get(fileName);
     }
 
     @Override
@@ -32,13 +45,25 @@ public class CallbackClientImpl extends UnicastRemoteObject implements CallbackC
     }
 
     @Override
-    public String searchFile(String fileName) throws RemoteException {
-        Predicate<String> predicate = x -> x.equals(fileName);
-        try {
-            return Arrays.stream(pathNames).filter(predicate).findFirst().get();
+    public boolean searchFile(String fileName) throws RemoteException {
 
-        } catch (NoSuchElementException e) {
-            return "no such file";
-        }
+        Predicate<String> predicate = x -> x.equals(fileName);
+        return Arrays.stream(pathNames).anyMatch(predicate);
+
+    }
+
+    @Override
+    public void saveLink(String fileName, CallbackClientInterface link) throws RemoteException {
+        if (!downloadLinks.containsKey(fileName))
+            downloadLinks.put(fileName, link);
+    }
+
+
+    //TODO implement download
+    @Override
+    public void downloadFile(String fileName, CallbackClientInterface link) throws RemoteException {
+
+        JOptionPane.showMessageDialog(null, "download complete" + "\n");
+
     }
 }
