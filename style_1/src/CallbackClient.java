@@ -16,21 +16,13 @@ public class CallbackClient {
 
         try {
 
-            int RMIport;
-            String hostName;
             InputStreamReader is = new InputStreamReader(System.in);
             BufferedReader br = new BufferedReader(is);
 
-//            System.out.println("enter rmi registry host name: ");
-//            hostName = br.readLine();
 
             System.out.println("enter rmi registry port number");
             String portNum = br.readLine();
-            RMIport = Integer.parseInt(portNum);
 
-//            System.out.println("Enter how many seconds to stay registered:");
-//            String timeDuration = br.readLine();
-//            int time = Integer.parseInt(timeDuration);
 
             String registryURL = "rmi://localhost:" + portNum + "/callback";
 
@@ -70,9 +62,24 @@ public class CallbackClient {
                         break;
                     case 1:
                         //TODO implement download logic
+
+                        //first we display available files to user
                         String[] availableFiles = callbackObj.showAvailableFiles().toArray(new String[0]) ;
+
+                        if (availableFiles.length == 0) {
+                            JOptionPane.showMessageDialog(null, "Not download links found");
+                            break;
+                        }
                         int choose = JOptionPane.showOptionDialog(null, "Choose a file", "Option dialog", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, availableFiles, availableFiles[0]);
-                        callbackObj.downloadFile(availableFiles[choose], callbackObj.getDownloadLink(availableFiles[choose]));
+
+                        //now that the user chose the file, we need to get that file's path
+
+
+                        callbackObj.downloadFile(availableFiles[choose] //file to download
+                                , callbackObj.getFilePaths(availableFiles[choose]) // file path
+                                , callbackObj.getDownloadLink(availableFiles[choose]), //start downloading for this client
+                                callbackObj // we send consumer reference to receive data
+                        );
 
                         break;
 

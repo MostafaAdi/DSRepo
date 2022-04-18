@@ -44,8 +44,6 @@ public class CallbackServerImpl extends UnicastRemoteObject implements CallbackS
         System.out.println("**********************************\n"
                 + "Searching For File ----");
 
-
-        CallbackClientInterface result;
         for (int i = 0; i < clientList.size(); i++) {
 
             CallbackClientInterface nextClient = (CallbackClientInterface) clientList.elementAt(i);

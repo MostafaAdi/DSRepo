@@ -1,5 +1,7 @@
 import javax.swing.*;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
@@ -7,22 +9,33 @@ import java.util.function.Predicate;
 
 public class CallbackClientImpl extends UnicastRemoteObject implements CallbackClientInterface {
 
-    private String[] pathNames;
+    private String[] fileNames;
+    private String sourceDir;
+    //this saves remote objects
     private Map<String, CallbackClientInterface> downloadLinks;
+    //this saves file path because we need to copy the file
+    private Map<String, String> filePaths;
 
-    public void setPathNames(String[] pathNames) {
-        this.pathNames = pathNames;
+    public String[] getFileNames() {
+        return fileNames;
     }
 
-    public String[] getPathNames() {
-        return pathNames;
+    public String getSourceDir() {
+        return sourceDir;
     }
 
-    public CallbackClientImpl(String filePath) throws RemoteException {
+    @Override
+    public String getFilePaths(String fileName) {
+        return filePaths.get(fileName);
+    }
+
+    public CallbackClientImpl(String folderPath) throws RemoteException {
         super();
-        File file = new File("E:/" + filePath);
-        this.pathNames = file.list();
+        File dir = new File("E:/" + folderPath);
+        this.fileNames = dir.list();
+        this.sourceDir = "E:/" + folderPath;
         downloadLinks = new HashMap<>();
+        filePaths = new HashMap<>();
 
 
     }
@@ -48,7 +61,7 @@ public class CallbackClientImpl extends UnicastRemoteObject implements CallbackC
     public boolean searchFile(String fileName) throws RemoteException {
 
         Predicate<String> predicate = x -> x.equals(fileName);
-        return Arrays.stream(pathNames).anyMatch(predicate);
+        return Arrays.stream(fileNames).anyMatch(predicate);
 
     }
 
@@ -56,14 +69,56 @@ public class CallbackClientImpl extends UnicastRemoteObject implements CallbackC
     public void saveLink(String fileName, CallbackClientInterface link) throws RemoteException {
         if (!downloadLinks.containsKey(fileName))
             downloadLinks.put(fileName, link);
+
+        filePaths.put(fileName, link.giveMeSourceDirectory());
     }
 
 
     //TODO implement download
     @Override
-    public void downloadFile(String fileName, CallbackClientInterface link) throws RemoteException {
+    public synchronized void downloadFile(String fileName, String filePath, CallbackClientInterface link, CallbackClientInterface consumer) throws RemoteException {
+
+        File f1 = new File(filePath + "/" + fileName);
+        try {
+
+            FileInputStream in = new FileInputStream(f1);
+            byte[] myData = new byte[1024 * 1242];
+            int len = in.read(myData);
+
+            while (len > 0) {
+                consumer.consumeData(f1.getName(), myData, len);
+                len = in.read(myData);
+            }
+
+            downloadLinks.remove(fileName);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public synchronized void consumeData(String fileName, byte[] data, int length) throws RemoteException {
+
+        System.out.println("start transfer!");
+        File file = new File(this.sourceDir + "/" + fileName);
+//        File file = new File("C:\\Users\\Steve\\OneDrive\\Desktop\\games");
+        try {
+            file.createNewFile();
+            FileOutputStream os = new FileOutputStream(file);
+            os.write(data, 0, length);
+            os.flush();
+            os.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         JOptionPane.showMessageDialog(null, "download complete" + "\n");
+    }
 
+    @Override
+    public String giveMeSourceDirectory() throws RemoteException {
+        return this.sourceDir;
     }
 }
